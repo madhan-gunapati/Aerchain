@@ -27,13 +27,13 @@ const App = () => {
   return (
     <div className="min-h-screen px-4 py-8 bg-(--bg) text-(--text) transition-colors">
       <header className="max-w-4xl mx-auto flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Task Manager With Voice Assistance</h1>
+        <h1 className="text-2xl font-bold">Voice Assisted Task Manager</h1>
         <div>
           <button
             onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-            className="px-3 py-2 rounded-md border bg-white dark:bg-slate-700"
+            className="  px-3 py-2 rounded-md border bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600"
           >
-            {theme === 'dark' ? ' Dark' : ' Light'}
+            {theme === 'dark' ?  '☀️ ' :'🌙 ' }
           </button>
         </div>
       </header>
