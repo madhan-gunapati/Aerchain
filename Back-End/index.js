@@ -4,6 +4,7 @@ import axios from 'axios'
 import dotenv from "dotenv"
 import multer from 'multer'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { prisma } from './lib/prisma.js'
 dotenv.config();
 
 
@@ -17,6 +18,8 @@ res.send('App is working fine')
 
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 50 * 1024 * 1024 } })
+
+
 app.post('/stt', upload.single('file'), async (req, res) => {
         try {
             const apiKey = process.env.ASSEMBLYAI_API_KEY 
@@ -76,6 +79,7 @@ app.post('/stt', upload.single('file'), async (req, res) => {
             const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
             const prompt = `Extract task details from the following text. Return a JSON object with these fields:
 - taskName (string): The name/title of the task. Default: "Untitled Task" if not found.
+- description(string):The detailed description of the task. Default: "No Detailed Description" if not found.
 - status (string): The status of the task (e.g., 'to-do', 'in-progress', 'completed'). Default: "to-do" if not found.
 - deadline (string): The deadline in YYYY-MM-DD format. Default: null if not found.
 - priority (string): The priority level (low, medium, high). Default: "medium" if not found.
@@ -87,6 +91,7 @@ Text: ${transcript.text}`
             const geminiResp = await model.generateContent(prompt)
             let taskDetails = {
               taskName: 'Untitled Task',
+              description:'No Detailed Desc.',
               status: 'to-do',
               deadline: null,
               priority: 'medium'
@@ -109,6 +114,89 @@ Text: ${transcript.text}`
         }
     }
 )
+
+// Add new task to database
+app.post('/add-task', async (req, res) => {
+    try {
+        const { name, desc, dueDate, priority, status } = req.body
+
+        if (!name) {
+            return res.status(400).json({ error: 'Task name is required' })
+        }
+
+        const task = await prisma.task.create({
+            data: {
+                name,
+                desc: desc || 'No Detailed Description',
+                dueDate: dueDate ? new Date(dueDate) : null,
+                priority: priority || 'medium',
+                status: status || 'todo'
+            }
+        })
+
+        return res.status(201).json({ message: 'Task added successfully', task })
+    } catch (err) {
+        console.error('Add task error:', err.message)
+        return res.status(500).json({ error: 'Failed to add task', details: err.message })
+    }
+})
+
+// Update existing task
+app.patch('/update-task/:id', async (req, res) => {
+    try {
+        const { id } = req.params
+        const { name, desc, dueDate, priority, status } = req.body
+
+        const task = await prisma.task.update({
+            where: { id },
+            data: {
+                ...(name && { name }),
+                ...(desc && { desc }),
+                ...(dueDate && { dueDate: new Date(dueDate) }),
+                ...(priority && { priority }),
+                ...(status && { status })
+            }
+        })
+
+        return res.json({ message: 'Task updated successfully', task })
+    } catch (err) {
+        console.error('Update task error:', err.message)
+        if (err.code === 'P2025') {
+            return res.status(404).json({ error: 'Task not found' })
+        }
+        return res.status(500).json({ error: 'Failed to update task', details: err.message })
+    }
+})
+
+// Delete existing task
+app.delete('/delete-task/:id', async (req, res) => {
+    try {
+        const { id } = req.params
+
+        const task = await prisma.task.delete({
+            where: { id }
+        })
+
+        return res.json({ message: 'Task deleted successfully', task })
+    } catch (err) {
+        console.error('Delete task error:', err.message)
+        if (err.code === 'P2025') {
+            return res.status(404).json({ error: 'Task not found' })
+        }
+        return res.status(500).json({ error: 'Failed to delete task', details: err.message })
+    }
+})
+
+// Fetch all tasks
+app.get('/tasks', async (req, res) => {
+    try {
+        const tasks = await prisma.task.findMany({ orderBy: { createdAt: 'desc' } })
+        return res.json({ tasks })
+    } catch (err) {
+        console.error('Fetch tasks error:', err.message || err)
+        return res.status(500).json({ error: 'Failed to fetch tasks', details: err.message })
+    }
+})
 
 app.listen(3000, ()=>{
     console.log('App is listening at port 3000')
