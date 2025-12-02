@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+:root{
+	--bg: #f8fafc; /* light bg */
+	--text: #0f172a; /* light text */
+}
+
+.dark{
+	--bg: #0f1724; /* dark background */
+	--text: #f8fafc; /* dark text */
+}
+
+body{
+	background-color: var(--bg);
+	color: var(--text);
+	transition: background-color .2s ease, color .2s ease;
+}

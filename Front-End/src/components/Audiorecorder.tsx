@@ -6,6 +6,11 @@ export default function AudioRecorder() {
   const [audioURL, setAudioURL] = useState<string | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const recordingBlobRef = useRef<Blob | null>(null);
+  const [sendPermission, setSendPermission] = useState(false);
+  const [dialogResponse, setDialogResponse] = useState<string | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: "error" | "info" } | null>(null);
 
   const startRecording = async () => {
     try {
@@ -17,58 +22,12 @@ export default function AudioRecorder() {
         if (e.data && e.data.size > 0) chunksRef.current.push(e.data);
       };
 
-      mediaRecorderRef.current.onstop = async () => {
+      mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
         setAudioURL(url);
-
-        // POST the blob to the backend and handle response
-        try {
-          setIsUploading(true);
-          const form = new FormData();
-          form.append("file", blob, "recording.webm");
-
-          const res = await fetch("http://localhost:3000", {
-            method: "POST",
-            body: form,
-          });
-
-          const contentType = res.headers.get("content-type") || "";
-
-          if (contentType.includes("application/json")) {
-            const json = await res.json();
-            console.log("Server JSON response:", json);
-          } else if (contentType.startsWith("audio/") || contentType === "application/octet-stream") {
-            const arrayBuffer = await res.arrayBuffer();
-            // try decoding audio to an AudioBuffer so we can log details
-            try {
-              const win = window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext };
-              const AudioCtor = win.AudioContext ?? win.webkitAudioContext;
-              if (AudioCtor) {
-                const audioCtx = new AudioCtor();
-                const decoded = await audioCtx.decodeAudioData(arrayBuffer.slice(0));
-                console.log("Decoded audio response:", {
-                  sampleRate: decoded.sampleRate,
-                  length: decoded.length,
-                  duration: decoded.duration,
-                  numberOfChannels: decoded.numberOfChannels,
-                });
-              } else {
-                console.log("No AudioContext available to decode the response.");
-              }
-            } catch (decodeErr) {
-              console.log("Received binary/audio response (undecodable by AudioContext):", decodeErr);
-            }
-          } else {
-            // fallback to text
-            const text = await res.text();
-            console.log("Server text response:", text);
-          }
-        } catch (err) {
-          console.error("Upload or decode error:", err);
-        } finally {
-          setIsUploading(false);
-        }
+        // store blob for later sending when user grants permission
+        recordingBlobRef.current = blob;
       };
 
       mediaRecorderRef.current.start();
@@ -87,10 +46,10 @@ export default function AudioRecorder() {
 
   return (
     <div className="p-4 max-w-md mx-auto">
-      <div className="bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
+      <div className=" bg-white dark:bg-slate-800 dark:text-gray-100 shadow-md rounded-lg p-4 flex flex-col gap-4">
         <div>
           <h2 className="text-lg font-semibold">Voice Input</h2>
-          <p className="text-sm text-muted-foreground">Record audio and send it to the local server.</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">Record audio and send it to the local server.</p>
         </div>
 
         <div className="flex items-center gap-3">
@@ -103,24 +62,115 @@ export default function AudioRecorder() {
           </button>
 
           <button
-            className="inline-flex items-center gap-2 px-3 py-2 rounded-md border bg-gray-50 hover:bg-gray-100"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-md border bg-gray-50 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 dark:border-gray-600"
             onClick={() => {
               if (audioURL) {
                 URL.revokeObjectURL(audioURL);
                 setAudioURL(null);
+                recordingBlobRef.current = null;
+                setSendPermission(false);
               }
             }}
           >
             Clear
           </button>
 
-          {isUploading && <span className="text-sm text-gray-500">Uploading...</span>}
+          <button
+            className={`inline-flex items-center gap-2 px-3 py-2 rounded-md border ${sendPermission ? 'bg-sky-50 dark:bg-sky-900' : 'bg-white dark:bg-slate-700'} hover:bg-sky-50 dark:hover:bg-sky-900`}
+            onClick={() => setSendPermission((s) => !s)}
+          >
+            {sendPermission ? '✅ Sending Allowed' : '🔒 Allow Send'}
+          </button>
+
+          {audioURL && (
+            <button
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+              onClick={async () => {
+                // send only if permission granted and blob exists
+                if (!sendPermission) {
+                  setToast({ message: 'Please allow sending the recording first.', type: 'info' });
+                  setTimeout(() => setToast(null), 3000);
+                  return;
+                }
+
+                if (!recordingBlobRef.current) {
+                  setToast({ message: 'No recording available to send.', type: 'error' });
+                  setTimeout(() => setToast(null), 3000);
+                  return;
+                }
+
+                setIsUploading(true);
+                try {
+                  const form = new FormData();
+                  form.append('file', recordingBlobRef.current, 'recording.webm');
+
+                  const res = await fetch('http://localhost:3000/STT', { method: 'POST', body: form });
+
+                  if (!res.ok) {
+                    const text = await res.text().catch(() => 'Unknown error');
+                    setToast({ message: `Server error: ${text}`, type: 'error' });
+                    setTimeout(() => setToast(null), 4000);
+                    return;
+                  }
+
+                  const contentType = res.headers.get('content-type') || '';
+                  if (contentType.includes('application/json')) {
+                    const json = await res.json();
+                    setDialogResponse(JSON.stringify(json, null, 2));
+                    setShowDialog(true);
+                  } else {
+                    const text = await res.text();
+                    setDialogResponse(text);
+                    setShowDialog(true);
+                  }
+                } catch (err) {
+                  setToast({ message: `Upload failed: ${(err as Error).message}`, type: 'error' });
+                  setTimeout(() => setToast(null), 4000);
+                } finally {
+                  setIsUploading(false);
+                }
+              }}
+            >
+              📤 Send
+            </button>
+          )}
+
+          {isUploading && <span className="text-sm text-gray-500 dark:text-gray-300">Uploading...</span>}
         </div>
 
         {audioURL && (
           <div className="mt-2">
             <h3 className="text-sm font-medium">Recorded Audio</h3>
             <audio className="mt-2 w-full" controls src={audioURL} />
+          </div>
+        )}
+
+        {/* Dialog for showing server response */}
+        {showDialog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/50" onClick={() => setShowDialog(false)} />
+              <div className="relative bg-white dark:bg-slate-800 dark:text-gray-100 rounded-lg shadow-lg p-6 max-w-xl mx-4 z-10">
+              <h3 className="text-lg font-semibold mb-2">Server Response</h3>
+                <pre className="text-sm max-h-64 overflow-auto bg-gray-50 dark:bg-gray-900 p-3 rounded">{dialogResponse}</pre>
+              <div className="mt-4 flex justify-end">
+                <button
+                  className="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300"
+                  onClick={() => setShowDialog(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Toast for errors/info */}
+        {toast && (
+          <div className={`fixed right-4 bottom-6 z-50 max-w-xs w-full ${toast.type === 'error' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white'} rounded-md shadow-lg px-4 py-3`}>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm">{toast.message}</div>
+              <button onClick={() => setToast(null)} className="text-sm opacity-80">Dismiss</button>
+            </div>
           </div>
         )}
       </div>
