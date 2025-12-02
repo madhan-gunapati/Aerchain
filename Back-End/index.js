@@ -73,7 +73,7 @@ app.post('/stt', upload.single('file'), async (req, res) => {
             const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY)
             if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: 'Missing GEMINI_API_KEY env var' })
 
-            const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+            const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
             const prompt = `Extract task details from the following text. Return a JSON object with these fields:
 - taskName (string): The name/title of the task. Default: "Untitled Task" if not found.
 - status (string): The status of the task (e.g., 'to-do', 'in-progress', 'completed'). Default: "to-do" if not found.
