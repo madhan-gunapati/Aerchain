@@ -52,6 +52,7 @@ export default function Kanban({ viewMode = 'kanban' }: KanbanProps) {
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [searchText, setSearchText] = useState('')
   const [filterPriority, setFilterPriority] = useState<'all' | 'low' | 'medium' | 'high'>('all')
+  const [filterDate, setFilterDate] = useState('')
   const [showRecorderPopup, setShowRecorderPopup] = useState(false)
   const [toast, setToast] = useState<{ message: string; type?: 'error' | 'info' } | null>(null)
 
@@ -59,13 +60,20 @@ export default function Kanban({ viewMode = 'kanban' }: KanbanProps) {
     const q = searchText.trim().toLowerCase()
     return tasks.filter((t) => {
       if (filterPriority !== 'all' && (t.priority ?? 'medium') !== filterPriority) return false
+      if (filterDate) {
+        // Only include tasks with a dueDate matching filterDate
+        if (!t.dueDate) return false;
+        // Compare only date part (ignore time)
+        const taskDate = t.dueDate.split('T')[0];
+        if (taskDate !== filterDate) return false;
+      }
       if (!q) return true
       return (
         (t.name ?? '').toLowerCase().includes(q) ||
         (t.description ?? '').toLowerCase().includes(q)
       )
     })
-  }, [tasks, searchText, filterPriority])
+  }, [tasks, searchText, filterPriority, filterDate])
 
   const byStatusFiltered = (status: Task['status']) => filteredTasks.filter((t) => (t.status ?? 'to-do') === status)
 
@@ -153,7 +161,6 @@ export default function Kanban({ viewMode = 'kanban' }: KanbanProps) {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-3">
         <h2 className="text-lg md:text-xl font-semibold text-white">Tasks</h2>
         <div className="flex items-center gap-2 w-full sm:w-auto text-gray-900">
-          
           <div className="flex items-center gap-2 flex-1 sm:flex-none ">
             <div className="relative flex-1 ">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-900" size={16} />
@@ -164,6 +171,15 @@ export default function Kanban({ viewMode = 'kanban' }: KanbanProps) {
                 className="w-full pl-9 pr-3 py-2 rounded-md border bg-white text-gray-900 border-gray-200 text-sm"
               />
             </div>
+            {/* By Date Filter */}
+            <input
+              type="date"
+              value={filterDate}
+              onChange={e => setFilterDate(e.target.value)}
+              className="px-3 py-2 rounded-md border bg-white text-gray-900 border-gray-200 text-sm"
+              title="Filter by due date"
+              style={{ minWidth: 0 }}
+            />
             <button
               onClick={() => setFilterPriority((p) => (p === 'all' ? 'high' : p === 'high' ? 'medium' : p === 'medium' ? 'low' : 'all'))}
               title="Toggle priority filter"
@@ -172,7 +188,6 @@ export default function Kanban({ viewMode = 'kanban' }: KanbanProps) {
               <Filter size={16} />
               <span className="hidden sm:inline">{filterPriority === 'all' ? 'All' : filterPriority}</span>
             </button>
-
             <button
               onClick={() => setShowRecorderPopup(true)}
               title="Open voice recorder"
@@ -182,7 +197,6 @@ export default function Kanban({ viewMode = 'kanban' }: KanbanProps) {
               <span className="hidden sm:inline">Voice</span>
             </button>
           </div>
-
           <div className="flex items-center gap-2 ml-auto">
             <button
               onClick={() => setShowAddDialog(true)}
