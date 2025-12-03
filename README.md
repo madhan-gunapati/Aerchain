@@ -58,7 +58,7 @@ $ npm run seed
 ```bash
 # Start backend
 $ cd ../Back-End
-$ npm run dev
+$ node index.js
 
 # Start frontend
 $ cd ../Front-End
