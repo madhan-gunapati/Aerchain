@@ -1,13 +1,14 @@
-export async function addTaskToDB(task: { name: string; description?: string; status?: string; priority?: string; dueDate?: string }) {
+export async function addTaskToDB(task: { name: string; desc?: string; status?: string; priority?: string; dueDate?: string }) {
   // include priority and dueDate if provided
   const payload = {
     name: task.name,
-    description: task.description ?? '',
+    desc: task.desc ?? '',
     status: task.status ?? 'todo',
     // pass through optional fields if present
     ...(task.priority ? { priority: task.priority } : {}),
     ...(task.dueDate ? { dueDate: task.dueDate } : {}),
   }
+  
 
   const res = await fetch('http://localhost:3000/add-task', {
     method: 'POST',

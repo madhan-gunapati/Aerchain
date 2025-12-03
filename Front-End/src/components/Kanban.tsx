@@ -33,7 +33,7 @@ export default function Kanban({ viewMode = 'kanban' }: KanbanProps) {
       const res = await fetch('http://localhost:3000/tasks')
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       const data = await res.json()
-    console.log(data.tasks)
+    
       // assume data is an array of tasks
       setTasks(Array.isArray(data.tasks) ? data.tasks : [])
     } catch (err) {

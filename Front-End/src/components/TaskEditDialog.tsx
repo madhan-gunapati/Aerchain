@@ -93,7 +93,7 @@ export default function TaskEditDialog({
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Task description"
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none transition-all"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white   dark:text-gray-900 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none transition-all"
           />
         </div>
 
@@ -102,7 +102,7 @@ export default function TaskEditDialog({
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value as 'to-do' | 'in-progress' | 'completed')}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none transition-all"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white  dark:text-gray-900 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none transition-all"
           >
             <option value="to-do">To Do</option>
             <option value="in-progress">In Progress</option>
@@ -115,7 +115,7 @@ export default function TaskEditDialog({
           <select
             value={priority}
             onChange={(e) => setPriority(e.target.value as 'low' | 'medium' | 'high')}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none transition-all"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white  dark:text-gray-900 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none transition-all"
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -129,7 +129,7 @@ export default function TaskEditDialog({
             type="date"
             value={dueDate ?? ''}
             onChange={(e) => setDueDate(e.target.value || undefined)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-slate-700 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none transition-all"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white  dark:text-gray-900 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 outline-none transition-all"
           />
         </div>
       </div>

@@ -89,9 +89,10 @@ export default function AudioRecorder({ afterSave }: AudioRecorderProps) {
       const contentType = res.headers.get('content-type') || '';
       if (contentType.includes('application/json')) {
         const json = await res.json();
-        const taskDetails  = {name:json.taskDetails.taskName , desc:json.taskDetails.description , status:json.taskDetails.status , priority:json.taskDetails.priority , dueDate:json.taskDetails.deadline }
+        
+        const taskDetails  = {name:json.taskDetails.taskName , desc:json.text , status:json.taskDetails.status , priority:json.taskDetails.priority , dueDate:json.taskDetails.deadline }
         setDialogResponse(taskDetails);
-        console.log(json.taskDetails)
+        
         setShowEditDialog(true);
       } else {
         const text = await res.text();
@@ -118,7 +119,7 @@ export default function AudioRecorder({ afterSave }: AudioRecorderProps) {
       // Map fields to match addTaskToDB signature
       const payload = {
         name: task.name,
-        description: task.desc ?? '',
+        desc: task.desc ?? '',
         status: task.status ?? 'to-do',
         priority: task.priority,
         dueDate: task.dueDate,
