@@ -86,7 +86,30 @@ $ npm run dev
 4. The extracted task details are sent back to the frontend for validation.
 5. After validation, the task data is sent back to the backend and stored in the database.
 
-This flow enables users to create tasks using voice input, leveraging both AssemblyAI and Gemini AI for accurate and automated task creation.
+
+---
+
+## Design Decisions
+
+- AssemblyAI does not provide a WebSocket option for real-time subscription.
+- Webhooks can be used to communicate with AssemblyAI, but this would require the frontend to subscribe to a socket exposed by the backend, which was avoided for architectural simplicity.
+- Therefore, opted for connection pooling (polling) from the backend to the AssemblyAI API to check for transcription results.
+
+---
+
+## Possible Bottlenecks
+
+- Communication with AssemblyAI may be a bottleneck due to the need for continuous polling for every request, which can introduce latency and increase backend load.
+
+---
+
+## Further Possible Functionalities
+
+- Adding authentication (auth)
+- Supporting multi-user setup
+- Adding email functionality to notify users when a task is created, or when progress is changed, etc.
+- Email service can also be used to send all existing tasks as an email to the user.
+- Email notifications can be sent whenever a deadline is approaching or missed.
 
 ---
 
