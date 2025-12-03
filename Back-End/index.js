@@ -77,11 +77,12 @@ app.post('/stt', upload.single('file'), async (req, res) => {
             if (!process.env.GEMINI_API_KEY) return res.status(500).json({ error: 'Missing GEMINI_API_KEY env var' })
 
             const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+            const today = new Date().toISOString().slice(0, 10);
             const prompt = `Extract task details from the following text. Return a JSON object with these fields:
 - taskName (string): The name/title of the task. Default: "Untitled Task" if not found.
-- description(string):The detailed description of the task. Default: "No Detailed Description" if not found.
+- description (string): The detailed description of the task. Default: "No Detailed Description" if not found.
 - status (string): The status of the task (e.g., 'to-do', 'in-progress', 'completed'). Default: "to-do" if not found.
-- deadline (string): The deadline in YYYY-MM-DD format. Default: null if not found.
+- deadline (string): The deadline in YYYY-MM-DD format. If the deadline is given as a relative date (e.g., "by today evening", "by tomorrow", "by next week", etc.), convert it to the correct absolute date using today's date (${today}). Default: null if not found.
 - priority (string): The priority level (low, medium, high). Default: "medium" if not found.
 
 Return ONLY valid JSON, no other text.
@@ -117,10 +118,12 @@ Text: ${transcript.text}`
 
 // Add new task to database
 app.post('/add-task', async (req, res) => {
+    
     try {
         const { name, desc, dueDate, priority, status } = req.body
-
+        
         if (!name) {
+            
             return res.status(400).json({ error: 'Task name is required' })
         }
 
@@ -133,7 +136,7 @@ app.post('/add-task', async (req, res) => {
                 status: status || 'todo'
             }
         })
-
+        
         return res.status(201).json({ message: 'Task added successfully', task })
     } catch (err) {
         console.error('Add task error:', err.message)
