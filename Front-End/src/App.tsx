@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import AudioRecorder from "./components/Audiorecorder"
+import Kanban from "./components/Kanban"
 
 const App = () => {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -40,6 +41,7 @@ const App = () => {
 
       <main className="max-w-4xl mx-auto">
         <AudioRecorder />
+        <Kanban />
       </main>
     </div>
   )

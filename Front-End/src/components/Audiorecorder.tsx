@@ -1,4 +1,6 @@
 import { useRef, useState } from "react";
+import Dialog from "./Dialog";
+import Toast from "./Toast";
 
 export default function AudioRecorder() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -135,33 +137,12 @@ export default function AudioRecorder() {
         )}
 
         {/* Dialog for showing server response */}
-        {showDialog && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-            <div className="absolute inset-0 bg-black/50" onClick={() => setShowDialog(false)} />
-              <div className="relative bg-white dark:bg-slate-800 dark:text-gray-100 rounded-lg shadow-lg p-6 max-w-xl mx-4 z-10">
-              <h3 className="text-lg font-semibold mb-2">Server Response</h3>
-                <pre className="text-sm max-h-64 overflow-auto bg-gray-100 dark:bg-gray-700 p-3 rounded">{dialogResponse}</pre>
-              <div className="mt-4 flex justify-end">
-                <button
-                  className="px-4 py-2 rounded-md bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500"
-                  onClick={() => setShowDialog(false)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <Dialog open={showDialog} title="Server Response" onClose={() => setShowDialog(false)}>
+          <pre className="text-sm max-h-64 overflow-auto bg-gray-100 dark:bg-gray-700 p-3 rounded">{dialogResponse}</pre>
+        </Dialog>
 
         {/* Toast for errors/info */}
-        {toast && (
-          <div className={`fixed right-4 bottom-6 z-50 max-w-xs w-full ${toast.type === 'error' ? 'bg-gray-800 text-white dark:bg-gray-600' : 'bg-gray-700 text-white dark:bg-gray-500'} rounded-md shadow-lg px-4 py-3`}>
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-sm">{toast.message}</div>
-              <button onClick={() => setToast(null)} className="text-sm opacity-80">Dismiss</button>
-            </div>
-          </div>
-        )}
+        {toast && <Toast message={toast.message} type={toast.type === 'error' ? 'error' : 'info'} onClose={() => setToast(null)} />}
       </div>
     </div>
   );
