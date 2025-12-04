@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Sun, Moon  , List , Grid} from 'lucide-react'
+import {   List , Grid} from 'lucide-react'
 
 import Kanban from "./components/Kanban"
 
@@ -25,10 +25,18 @@ const App = () => {
     }
   })
 
+  
+
+
   useEffect(() => {
     try {
+      const dark = async ()=>{
+          await setTheme('dark')
+        }
       if (theme === 'dark') {
+        
         document.documentElement.classList.add('dark');
+        dark()
         localStorage.setItem('theme', 'dark');
       } else {
         document.documentElement.classList.remove('dark');
@@ -43,6 +51,8 @@ const App = () => {
   }, [theme]);
 
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  
+  
 
   return (
     <div className="min-h-screen px-2 sm:px-4 py-8 bg-white dark:bg-slate-900 dark:text-gray-100 transition-colors duration-200">

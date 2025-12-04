@@ -138,7 +138,7 @@ export default function Kanban({ viewMode = 'kanban' }: KanbanProps) {
     try {
       await addTaskToDB({
         name: taskData.name.trim(),
-        description: taskData.description?.trim() ?? '',
+        desc: taskData.description?.trim() ?? '',
         status: taskData.status ?? 'to-do',
         priority: taskData.priority,
         dueDate: taskData.dueDate,
